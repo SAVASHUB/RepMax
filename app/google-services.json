@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "385334052237",
+    "project_id": "repmax-5dd36",
+    "storage_bucket": "repmax-5dd36.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:385334052237:android:87ad82ed1a36fbc14fe9c4",
+        "android_client_info": {
+          "package_name": "com.example.repmax"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC8puiQBVVp8MoAF_u7JZTXLw53SeMe_fg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
