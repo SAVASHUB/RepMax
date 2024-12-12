@@ -32,6 +32,8 @@ fun SingUpPage(modifier: Modifier = Modifier, navController: NavController, auth
         mutableStateOf("")
     }
 
+    //val authState = authViewModel.authState.observeAsState()
+
     Column (
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,

@@ -23,6 +23,47 @@ class AuthViewModel : ViewModel() {
             _authState.value = AuthState.Authenticated
         }
     }
+
+    fun login(email : String,password : String){
+
+        if(email.isEmpty() || password.isEmpty()){
+            _authState.value = AuthState.Error("Email or password can't be empty")
+            return
+        }
+        _authState.value = AuthState.LoadingAuth
+        auth.signInWithEmailAndPassword(email,password)
+            .addOnCompleteListener{task->
+                if (task.isSuccessful){
+                    _authState.value = AuthState.Authenticated
+                }else{
+                    _authState.value = AuthState.Error(task.exception?.message?:"Something went wrong")
+                }
+            }
+    }
+
+    fun signUp(email : String,password : String){
+
+        if(email.isEmpty() || password.isEmpty()){
+            _authState.value = AuthState.Error("Email or password can't be empty")
+            return
+        }
+        _authState.value = AuthState.LoadingAuth
+        auth.createUserWithEmailAndPassword(email,password)
+            .addOnCompleteListener{task->
+                if (task.isSuccessful){
+                    _authState.value = AuthState.Authenticated
+                }else{
+                    _authState.value = AuthState.Error(task.exception?.message?:"Something went wrong")
+                }
+            }
+    }
+
+    fun signOut(){
+        auth.signOut()
+        _authState.value = AuthState.Unauthenticated
+    }
+
+
 }
 
 sealed class AuthState{
