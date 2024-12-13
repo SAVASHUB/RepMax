@@ -19,6 +19,6 @@ fun HomePage(modifier: Modifier = Modifier, navController: NavController, authVi
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("SING UP", fontSize = 32.sp)
+        Text("Home page", fontSize = 32.sp)
     }
 }
