@@ -4,7 +4,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.pose.*
 import com.google.mlkit.vision.pose.accurate.AccuratePoseDetectorOptions
 
-class PoseDetectionManager{
+class PoseDetectionManager {
     // Private detector instance - only this class manages it
     private var poseDetector: PoseDetector? = null
 
@@ -52,6 +52,20 @@ class PoseDetectionManager{
     }
 
     /**
+     * Alternative method with single callback for RepMax-specific logic
+     */
+    fun detectPoseForRepCounting(
+        image: InputImage,
+        callback: (Pose?, String?) -> Unit // Pose or error message
+    ) {
+        detectPose(
+            image = image,
+            onSuccess = { pose -> callback(pose, null) },
+            onFailure = { exception -> callback(null, exception.message) }
+        )
+    }
+
+    /**
      * Check if detector is ready to use
      */
     fun isReady(): Boolean = isInitialized && poseDetector != null
@@ -64,47 +78,30 @@ class PoseDetectionManager{
         poseDetector = null
         isInitialized = false
     }
-
-    // Extension functions for RepMax-specific pose analysis
-    /**
-     * Helper extension to extract key landmarks for exercise tracking
-     */
-    fun Pose.getExerciseLandmarks(): ExerciseLandmarks? {
-        val landmarks = this.allPoseLandmarks
-        if (landmarks.isEmpty()) return null
-
-        return ExerciseLandmarks(
-            leftShoulder = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_SHOULDER },
-            rightShoulder = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_SHOULDER },
-            leftElbow = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_ELBOW },
-            rightElbow = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_ELBOW },
-            leftWrist = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_WRIST },
-            rightWrist = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_WRIST },
-            leftHip = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_HIP },
-            rightHip = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_HIP },
-            leftKnee = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_KNEE },
-            rightKnee = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_KNEE },
-            leftAnkle = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_ANKLE },
-            rightAnkle = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_ANKLE }
-        )
-    }
-
-    /**
-     * Data class to hold key landmarks for exercise analysis
-     */
-    data class ExerciseLandmarks(
-        val leftShoulder: PoseLandmark?,
-        val rightShoulder: PoseLandmark?,
-        val leftElbow: PoseLandmark?,
-        val rightElbow: PoseLandmark?,
-        val leftWrist: PoseLandmark?,
-        val rightWrist: PoseLandmark?,
-        val leftHip: PoseLandmark?,
-        val rightHip: PoseLandmark?,
-        val leftKnee: PoseLandmark?,
-        val rightKnee: PoseLandmark?,
-        val leftAnkle: PoseLandmark?,
-        val rightAnkle: PoseLandmark?
-    )
-
 }
+
+// Extension functions for RepMax-specific pose analysis (OUTSIDE the class)
+/**
+ * Helper extension to extract key landmarks for exercise tracking
+ */
+fun Pose.getExerciseLandmarks(): ExerciseLandmarks? {
+    val landmarks = this.allPoseLandmarks
+    if (landmarks.isEmpty()) return null
+
+    return ExerciseLandmarks(
+        leftShoulder = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_SHOULDER },
+        rightShoulder = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_SHOULDER },
+        leftElbow = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_ELBOW },
+        rightElbow = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_ELBOW },
+        leftWrist = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_WRIST },
+        rightWrist = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_WRIST },
+        leftHip = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_HIP },
+        rightHip = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_HIP },
+        leftKnee = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_KNEE },
+        rightKnee = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_KNEE },
+        leftAnkle = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_ANKLE },
+        rightAnkle = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_ANKLE }
+    )
+}
+
+

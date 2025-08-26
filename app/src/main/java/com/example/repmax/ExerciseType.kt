@@ -1,8 +1,9 @@
 package com.example.repmax
 
-enum class ExerciseType ( val displayname : String){
+enum class ExerciseType(val displayName: String) {
     SQUAT("Squats"),
-    PUSHUP("Push-ups");
+    PUSH_UP("Push-ups"),
+    PULL_UP("Pull-ups");
 
     companion object {
         fun fromString(name: String): ExerciseType {

@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.repmax.ExerciseActivity
 import com.example.repmax.ExerciseButton
 import com.example.repmax.ExerciseType
 
@@ -31,12 +32,11 @@ fun HomePage(modifier: Modifier = Modifier, navController: NavController, authVi
 
     val context = LocalContext.current
 
-    // Define the function inside the composable
     fun startExerciseActivity(exerciseType: ExerciseType) {
-        //val intent = Intent(context, ExerciseActivity::class.java).apply {
-        //    putExtra("EXERCISE_TYPE", exerciseType.name)
-        //}
-        //context.startActivity(intent)
+        val intent = Intent(context, ExerciseActivity::class.java).apply {
+            putExtra("EXERCISE_TYPE", exerciseType.name)
+        }
+        context.startActivity(intent)
     }
 
     Column (
@@ -49,7 +49,7 @@ fun HomePage(modifier: Modifier = Modifier, navController: NavController, authVi
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 64.dp)
         )
 
         Text(
@@ -62,7 +62,7 @@ fun HomePage(modifier: Modifier = Modifier, navController: NavController, authVi
 
         ExerciseButton(
             onClick = {
-                //startExerciseActivity(context, ExerciseType.SQUAT)
+                startExerciseActivity(ExerciseType.SQUAT)
             }
         )
 
