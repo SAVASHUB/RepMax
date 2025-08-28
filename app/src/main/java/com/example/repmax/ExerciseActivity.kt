@@ -39,7 +39,7 @@ class ExerciseActivity : AppCompatActivity() {
     // Positioning System
     private var isUserPositioned = false
     private var positioningCheckCount = 0
-    private val requiredPositionFrames = 30 // User must be in position for 30 frames (~1 second)
+    private val requiredPositionFrames = 60 // User must be in position for 30 frames (~1 second)
 
 
     // Camera Components
