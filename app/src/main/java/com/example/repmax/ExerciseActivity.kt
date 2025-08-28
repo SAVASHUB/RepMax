@@ -36,6 +36,12 @@ class ExerciseActivity : AppCompatActivity() {
     private var repCount = 0
     private var exerciseState = ExerciseState.READY
 
+    // Positioning System
+    private var isUserPositioned = false
+    private var positioningCheckCount = 0
+    private val requiredPositionFrames = 30 // User must be in position for 30 frames (~1 second)
+
+
     // Camera Components
     private lateinit var cameraExecutor: ExecutorService
     private var cameraProvider: ProcessCameraProvider? = null
@@ -46,6 +52,8 @@ class ExerciseActivity : AppCompatActivity() {
     private lateinit var exerciseTitleText: TextView
     private lateinit var repCountText: TextView
     private lateinit var instructionText: TextView
+
+    private lateinit var positioningFrame: android.view.View
 
     // Camera Permission Launcher
     private val requestPermissionLauncher = registerForActivityResult(
@@ -83,11 +91,27 @@ class ExerciseActivity : AppCompatActivity() {
         exerciseTitleText = findViewById(R.id.tv_exercise_title)
         repCountText = findViewById(R.id.tv_rep_count)
         instructionText = findViewById(R.id.tv_instruction)
+        positioningFrame = findViewById(R.id.positioning_frame)
 
         // Set initial UI
-        exerciseTitleText.text = currentExercise.toString()
+        exerciseTitleText.text = currentExercise.displayName
         updateRepCount(0)
-        updateInstruction("Get ready! Position yourself in front of the camera")
+        showPositioningPhase()
+    }
+
+    private fun showPositioningPhase() {
+        // Show the positioning frame
+        positioningFrame.visibility = android.view.View.VISIBLE
+        updateInstruction("Position yourself inside the frame")
+        isUserPositioned = false
+        positioningCheckCount = 0
+    }
+
+    private fun hidePositioningFrame() {
+        // Hide the positioning frame
+        positioningFrame.visibility = android.view.View.GONE
+        updateInstruction("Great! Start your ${currentExercise.displayName.lowercase()}!")
+        isUserPositioned = true
     }
 
     private fun initializePoseDetection() {
@@ -185,9 +209,83 @@ class ExerciseActivity : AppCompatActivity() {
             imageProxy.close()
         }
     }
+    private fun checkUserPositioning(pose: Pose) {
+        val landmarks = pose.getExerciseLandmarks()
+
+        if (landmarks != null) {
+            val isInFrame = when (currentExercise) {
+                ExerciseType.SQUAT -> checkSquatPositioning(landmarks)
+                ExerciseType.PUSH_UP -> checkPushUpPositioning(landmarks)
+                ExerciseType.PULL_UP -> checkPullUpPositioning(landmarks)
+            }
+
+            if (isInFrame) {
+                positioningCheckCount++
+                updateInstruction("Hold position... ${positioningCheckCount}/${requiredPositionFrames}")
+
+                if (positioningCheckCount >= requiredPositionFrames) {
+                    hidePositioningFrame()
+                }
+            } else {
+                positioningCheckCount = 0
+                updateInstruction("Position yourself inside the frame")
+            }
+        } else {
+            positioningCheckCount = 0
+            updateInstruction("Step back so your full body is visible")
+        }
+    }
+
+    private fun checkPullUpPositioning(landmarks: ExerciseLandmarks): Boolean { return false}
+
+    private fun checkPushUpPositioning(landmarks: ExerciseLandmarks): Boolean { return false}
+
+    private fun checkSquatPositioning(landmarks: ExerciseLandmarks): Boolean {
+        // Check if user is properly positioned for squat detection
+        val leftHip = landmarks.leftHip
+        val rightHip = landmarks.rightHip
+        val leftKnee = landmarks.leftKnee
+        val rightKnee = landmarks.rightKnee
+        val leftAnkle = landmarks.leftAnkle
+        val rightAnkle = landmarks.rightAnkle
+        val leftShoulder = landmarks.leftShoulder
+        val rightShoulder = landmarks.rightShoulder
+
+        // All key points must be visible
+        if (leftHip == null || rightHip == null ||
+            leftKnee == null || rightKnee == null ||
+            leftAnkle == null || rightAnkle == null ||
+            leftShoulder == null || rightShoulder == null) {
+            return false
+        }
+
+        // Get screen dimensions
+        val screenWidth = previewView.width.toFloat()
+        val screenHeight = previewView.height.toFloat()
+
+        // Define frame boundaries (middle 70% of screen width, middle 80% of height)
+        val frameLeft = screenWidth * 0.15f
+        val frameRight = screenWidth * 0.85f
+        val frameTop = screenHeight * 0.1f
+        val frameBottom = screenHeight * 0.9f
+
+        // Check if key body points are within the frame
+        val avgShoulderX = (leftShoulder.position.x + rightShoulder.position.x) / 2
+        val avgHipX = (leftHip.position.x + rightHip.position.x) / 2
+        val avgAnkleX = (leftAnkle.position.x + rightAnkle.position.x) / 2
+
+        val headY = minOf(leftShoulder.position.y, rightShoulder.position.y) - 50 // Estimate head position
+        val feetY = maxOf(leftAnkle.position.y, rightAnkle.position.y)
+
+        return avgShoulderX in frameLeft..frameRight &&
+                avgHipX in frameLeft..frameRight &&
+                avgAnkleX in frameLeft..frameRight &&
+                headY >= frameTop &&
+                feetY <= frameBottom
+    }
+
 
     private fun analyzeExerciseMovement(pose: Pose) {
-        // FIXED: Use the extension function to get landmarks
         val landmarks = pose.getExerciseLandmarks()
 
         if (landmarks != null) {
@@ -207,7 +305,6 @@ class ExerciseActivity : AppCompatActivity() {
                         updateInstruction("Good! Now go back up")
                     }
                     ExerciseState.UP_POSITION -> {
-                        // FIXED: Simplified logic for rep counting
                         repCount++
                         updateRepCount(repCount)
                         updateInstruction("Great rep! Keep going")
@@ -219,9 +316,9 @@ class ExerciseActivity : AppCompatActivity() {
                     else -> {}
                 }
             }
-        } else {
-            updateInstruction("Position yourself fully in the camera view")
-        }
+        } //else {
+         //   updateInstruction("Stay in position and continue exercising")
+       // }
     }
 
     private fun detectSquatMovement(landmarks: ExerciseLandmarks): ExerciseState {
@@ -241,14 +338,14 @@ class ExerciseActivity : AppCompatActivity() {
             val avgKneeY = (leftKnee.position.y + rightKnee.position.y) / 2
             val avgAnkleY = (leftAnkle.position.y + rightAnkle.position.y) / 2
 
-            // Squat detection logic
-            // When squatting down, knees should be closer to ankles
+            // Improved squat detection with standardized positioning
             val kneeAnkleDistance = avgKneeY - avgAnkleY
             val hipKneeDistance = avgHipY - avgKneeY
 
+            // Since user is positioned consistently, we can use more precise thresholds
             return when {
-                kneeAnkleDistance < 100 && hipKneeDistance < 80 -> ExerciseState.DOWN_POSITION
-                kneeAnkleDistance > 150 && hipKneeDistance > 120 -> ExerciseState.UP_POSITION
+                kneeAnkleDistance < 80 && hipKneeDistance < 60 -> ExerciseState.DOWN_POSITION  // Deep squat
+                kneeAnkleDistance > 120 && hipKneeDistance > 100 -> ExerciseState.UP_POSITION   // Standing
                 else -> ExerciseState.TRANSITION
             }
         }
@@ -291,13 +388,4 @@ class ExerciseActivity : AppCompatActivity() {
         Log.d("ExerciseActivity", "Activity destroyed, resources cleaned up")
     }
 
-    override fun onPause() {
-        super.onPause()
-        // You can pause detection here if needed
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // Resume detection if paused
-    }
 }

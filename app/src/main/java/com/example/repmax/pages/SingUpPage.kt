@@ -85,7 +85,7 @@ fun SingUpPage(modifier: Modifier = Modifier, navController: NavController, auth
         Button(onClick = {
             authViewModel.signUp(email,password)
         }, enabled = authState.value != AuthState.LoadingAuth) {
-            Text(text = "Sing up")
+            Text(text = "Sign up")
         }
 
         Spacer(modifier = Modifier.height(30.dp))
