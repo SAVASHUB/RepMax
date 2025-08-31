@@ -17,6 +17,8 @@ import com.google.mlkit.vision.pose.Pose
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import androidx.camera.core.ImageProxy
+import android.content.Intent
+import android.widget.Button
 
 enum class ExerciseState {
     READY,
@@ -93,10 +95,26 @@ class ExerciseActivity : AppCompatActivity() {
         instructionText = findViewById(R.id.tv_instruction)
         positioningFrame = findViewById(R.id.positioning_frame)
 
+        val finishButton = findViewById<Button>(R.id.btn_finish)
+        finishButton.setOnClickListener {
+            endExercise()
+        }
+
         // Set initial UI
         exerciseTitleText.text = currentExercise.displayName
         updateRepCount(0)
         showPositioningPhase()
+    }
+
+    private fun endExercise() {
+        // Optional: Save exercise results or show summary
+        Toast.makeText(this, "Exercise completed! Reps: $repCount", Toast.LENGTH_SHORT).show()
+
+        // Go back to MainActivity (home page)
+        val intent = Intent(this, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        startActivity(intent)
+        finish()
     }
 
     private fun showPositioningPhase() {
@@ -107,9 +125,9 @@ class ExerciseActivity : AppCompatActivity() {
         positioningCheckCount = 0
     }
 
-    private fun hidePositioningFrame() {
-        // Hide the positioning frame
-        positioningFrame.visibility = android.view.View.GONE
+    private fun PositioningFrame() {
+        // Keep the positioning frame visible but change its purpose
+        // positioningFrame.visibility = android.view.View.GONE
         updateInstruction("Great! Start your ${currentExercise.displayName.lowercase()}!")
         isUserPositioned = true
     }
@@ -178,8 +196,6 @@ class ExerciseActivity : AppCompatActivity() {
                 imageAnalyzer
             )
 
-            updateInstruction("Start your ${currentExercise.toString().lowercase()}!")
-
         } catch (exc: Exception) {
             Log.e("ExerciseActivity", "Use case binding failed", exc)
         }
@@ -224,7 +240,7 @@ class ExerciseActivity : AppCompatActivity() {
                 updateInstruction("Hold position... ${positioningCheckCount}/${requiredPositionFrames}")
 
                 if (positioningCheckCount >= requiredPositionFrames) {
-                    hidePositioningFrame()
+                    PositioningFrame()
                 }
             } else {
                 positioningCheckCount = 0
@@ -289,36 +305,47 @@ class ExerciseActivity : AppCompatActivity() {
         val landmarks = pose.getExerciseLandmarks()
 
         if (landmarks != null) {
-            // Exercise-specific detection logic
+            // First check if user is positioned (if positioning frame is still visible)
+            if (!isUserPositioned) {
+                checkUserPositioning(pose)
+                return // Don't count reps until positioned
+            }
+
+            // Only start counting reps after user is properly positioned
             val newState = when (currentExercise) {
                 ExerciseType.SQUAT -> detectSquatMovement(landmarks)
                 ExerciseType.PUSH_UP -> detectPushUpMovement(landmarks)
                 ExerciseType.PULL_UP -> detectPullUpMovement(landmarks)
             }
 
-            // Check for rep completion
+            // Check for rep completion - only count when transitioning from DOWN to UP
             if (exerciseState != newState) {
+                val oldState = exerciseState
                 exerciseState = newState
 
-                when (exerciseState) {
-                    ExerciseState.DOWN_POSITION -> {
-                        updateInstruction("Good! Now go back up")
-                    }
-                    ExerciseState.UP_POSITION -> {
+                Log.d("ExerciseActivity", "State change: $oldState -> $newState")
+
+                when {
+                    oldState == ExerciseState.DOWN_POSITION && newState == ExerciseState.UP_POSITION -> {
                         repCount++
                         updateRepCount(repCount)
-                        updateInstruction("Great rep! Keep going")
+                        updateInstruction("Great rep! Keep going - Reps: $repCount")
                         Log.d("ExerciseActivity", "Rep completed! Total: $repCount")
                     }
-                    ExerciseState.TRANSITION -> {
+                    newState == ExerciseState.DOWN_POSITION -> {
+                        updateInstruction("Good! Now go back up")
+                        Log.d("ExerciseActivity", "Down position detected")
+                    }
+                    newState == ExerciseState.UP_POSITION -> {
+                        updateInstruction("Ready for next squat")
+                        Log.d("ExerciseActivity", "Up position detected")
+                    }
+                    newState == ExerciseState.TRANSITION -> {
                         updateInstruction("Keep moving...")
                     }
-                    else -> {}
                 }
             }
-        } //else {
-         //   updateInstruction("Stay in position and continue exercising")
-       // }
+        }
     }
 
     private fun detectSquatMovement(landmarks: ExerciseLandmarks): ExerciseState {
@@ -326,30 +353,37 @@ class ExerciseActivity : AppCompatActivity() {
         val rightHip = landmarks.rightHip
         val leftKnee = landmarks.leftKnee
         val rightKnee = landmarks.rightKnee
-        val leftAnkle = landmarks.leftAnkle
-        val rightAnkle = landmarks.rightAnkle
 
         if (leftHip != null && rightHip != null &&
-            leftKnee != null && rightKnee != null &&
-            leftAnkle != null && rightAnkle != null) {
+            leftKnee != null && rightKnee != null) {
 
             // Calculate average positions
             val avgHipY = (leftHip.position.y + rightHip.position.y) / 2
             val avgKneeY = (leftKnee.position.y + rightKnee.position.y) / 2
-            val avgAnkleY = (leftAnkle.position.y + rightAnkle.position.y) / 2
 
-            // Improved squat detection with standardized positioning
-            val kneeAnkleDistance = avgKneeY - avgAnkleY
-            val hipKneeDistance = avgHipY - avgKneeY
+            // FIXED: Use absolute distance since knees are below hips
+            val hipKneeDistance = avgKneeY - avgHipY  // Now this will be positive
 
-            // Since user is positioned consistently, we can use more precise thresholds
+            // Debug logging
+            Log.d("SquatDetection", "Hip Y: $avgHipY, Knee Y: $avgKneeY, Distance: $hipKneeDistance")
+
             return when {
-                kneeAnkleDistance < 80 && hipKneeDistance < 60 -> ExerciseState.DOWN_POSITION  // Deep squat
-                kneeAnkleDistance > 120 && hipKneeDistance > 100 -> ExerciseState.UP_POSITION   // Standing
-                else -> ExerciseState.TRANSITION
+                hipKneeDistance < 300 -> {  // Squatting - hips closer to knees
+                    Log.d("SquatDetection", "DOWN position - distance: $hipKneeDistance")
+                    ExerciseState.DOWN_POSITION
+                }
+                hipKneeDistance > 400 -> {  // Standing - hips far from knees
+                    Log.d("SquatDetection", "UP position - distance: $hipKneeDistance")
+                    ExerciseState.UP_POSITION
+                }
+                else -> {
+                    Log.d("SquatDetection", "TRANSITION - distance: $hipKneeDistance")
+                    ExerciseState.TRANSITION
+                }
             }
         }
 
+        Log.d("SquatDetection", "READY - missing landmarks")
         return ExerciseState.READY
     }
 
