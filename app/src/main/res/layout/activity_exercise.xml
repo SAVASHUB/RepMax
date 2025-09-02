@@ -13,13 +13,13 @@
         android:layout_height="match_parent"
         android:layout_centerInParent="true" />
 
-    <!-- Positioning Frame Overlay -->
+    <!-- Simple positioning frame -->
     <View
         android:id="@+id/positioning_frame"
-        android:layout_width="320dp"
-        android:layout_height="600dp"
+        android:layout_width="280dp"
+        android:layout_height="590dp"
         android:layout_centerInParent="true"
-        android:layout_marginTop="-50dp"
+        android:layout_marginTop="-40dp"
         android:background="@drawable/positioning_frame_overlay"
         android:visibility="visible" />
 
@@ -51,12 +51,12 @@
             android:fontFamily="sans-serif-light"
             android:text="Reps: 0"
             android:textColor="@android:color/white"
-            android:textSize="36sp"
+            android:textSize="28sp"
             android:textStyle="bold" />
 
     </LinearLayout>
 
-    <!-- Bottom UI Overlay - Simplified without stop button -->
+    <!-- Bottom UI Overlay -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -77,7 +77,6 @@
             android:textSize="18sp"
             android:textStyle="bold" />
 
-        <!-- Optional: Add back button or finish exercise button -->
         <Button
             android:id="@+id/btn_finish"
             android:layout_width="wrap_content"
@@ -85,50 +84,8 @@
             android:layout_marginTop="16dp"
             android:backgroundTint="@color/button_secondary"
             android:text="Finish Exercise"
-            android:textColor="@android:color/white"
-            android:onClick="finish" />
+            android:textColor="@android:color/white" />
 
     </LinearLayout>
-
-    <!-- Corner markers for better frame visibility -->
-    <ImageView
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:layout_marginStart="-140dp"
-        android:layout_marginTop="-225dp"
-        android:src="@drawable/corner_top_left"
-        android:visibility="visible" />
-
-    <ImageView
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:layout_marginStart="140dp"
-        android:layout_marginTop="-225dp"
-        android:src="@drawable/corner_top_right"
-        android:visibility="visible" />
-
-    <ImageView
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:layout_marginStart="-140dp"
-        android:layout_marginTop="225dp"
-        android:src="@drawable/corner_bottom_left"
-        android:visibility="visible" />
-
-    <ImageView
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:layout_marginStart="140dp"
-        android:layout_marginTop="225dp"
-        android:src="@drawable/corner_bottom_right"
-        android:visibility="visible" />
 
 </RelativeLayout>

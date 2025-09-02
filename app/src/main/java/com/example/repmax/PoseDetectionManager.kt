@@ -84,24 +84,30 @@ class PoseDetectionManager {
 /**
  * Helper extension to extract key landmarks for exercise tracking
  */
-fun Pose.getExerciseLandmarks(): ExerciseLandmarks? {
+fun Pose.getExerciseLandmarks(minConfidence: Float = 0.6f): ExerciseLandmarks? {
     val landmarks = this.allPoseLandmarks
     if (landmarks.isEmpty()) return null
 
+    fun safeGet(type: Int): PoseLandmark? {
+        val lm = landmarks.firstOrNull { it.landmarkType == type }
+        return if (lm != null && lm.inFrameLikelihood >= minConfidence) lm else null
+    }
+
     return ExerciseLandmarks(
-        leftShoulder = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_SHOULDER },
-        rightShoulder = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_SHOULDER },
-        leftElbow = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_ELBOW },
-        rightElbow = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_ELBOW },
-        leftWrist = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_WRIST },
-        rightWrist = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_WRIST },
-        leftHip = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_HIP },
-        rightHip = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_HIP },
-        leftKnee = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_KNEE },
-        rightKnee = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_KNEE },
-        leftAnkle = landmarks.firstOrNull { it.landmarkType == PoseLandmark.LEFT_ANKLE },
-        rightAnkle = landmarks.firstOrNull { it.landmarkType == PoseLandmark.RIGHT_ANKLE }
+        leftShoulder = safeGet(PoseLandmark.LEFT_SHOULDER),
+        rightShoulder = safeGet(PoseLandmark.RIGHT_SHOULDER),
+        leftElbow = safeGet(PoseLandmark.LEFT_ELBOW),
+        rightElbow = safeGet(PoseLandmark.RIGHT_ELBOW),
+        leftWrist = safeGet(PoseLandmark.LEFT_WRIST),
+        rightWrist = safeGet(PoseLandmark.RIGHT_WRIST),
+        leftHip = safeGet(PoseLandmark.LEFT_HIP),
+        rightHip = safeGet(PoseLandmark.RIGHT_HIP),
+        leftKnee = safeGet(PoseLandmark.LEFT_KNEE),
+        rightKnee = safeGet(PoseLandmark.RIGHT_KNEE),
+        leftAnkle = safeGet(PoseLandmark.LEFT_ANKLE),
+        rightAnkle = safeGet(PoseLandmark.RIGHT_ANKLE)
     )
 }
+
 
 
