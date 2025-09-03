@@ -38,8 +38,6 @@ class ExerciseActivity : AppCompatActivity() {
     private lateinit var currentExercise: ExerciseType
     private var repCount = 0
 
-    //private var exerciseState = ExerciseState.READY
-
     // Simple Positioning System
     private var isUserPositioned = false
     private var positioningCheckCount = 0
@@ -293,14 +291,11 @@ class ExerciseActivity : AppCompatActivity() {
         val rightKnee = landmarks.rightKnee
         val leftAnkle = landmarks.leftAnkle
         val rightAnkle = landmarks.rightAnkle
-        val leftShoulder = landmarks.leftShoulder
-        val rightShoulder = landmarks.rightShoulder
-
+8
         // All key points must be visible
         if (leftHip == null || rightHip == null ||
             leftKnee == null || rightKnee == null ||
-            leftAnkle == null || rightAnkle == null ||
-            leftShoulder == null || rightShoulder == null) {
+            leftAnkle == null || rightAnkle == null) {
             return false
         }
 
@@ -311,21 +306,16 @@ class ExerciseActivity : AppCompatActivity() {
         // Define frame boundaries (middle 70% of screen width, middle 80% of height) // relax
         val frameLeft = screenWidth * 0.1f
         val frameRight = screenWidth * 0.9f
-        val frameTop = screenHeight * 0.1f
         val frameBottom = screenHeight * 0.9f
 
         // Check if key body points are within the frame
-        val avgShoulderX = (leftShoulder.position.x + rightShoulder.position.x) / 2
         val avgHipX = (leftHip.position.x + rightHip.position.x) / 2
         val avgAnkleX = (leftAnkle.position.x + rightAnkle.position.x) / 2
 
-        val headY = minOf(leftShoulder.position.y, rightShoulder.position.y) - 50 // Estimate head position
         val feetY = maxOf(leftAnkle.position.y, rightAnkle.position.y)
 
-        return avgShoulderX in frameLeft..frameRight &&
-                avgHipX in frameLeft..frameRight &&
+        return  avgHipX in frameLeft..frameRight &&
                 avgAnkleX in frameLeft..frameRight &&
-                headY >= frameTop &&
                 feetY <= frameBottom
     }
 
