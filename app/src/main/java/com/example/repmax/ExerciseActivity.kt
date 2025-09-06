@@ -229,6 +229,7 @@ class ExerciseActivity : AppCompatActivity() {
 
             val newState = when (currentExercise) {
                 ExerciseType.SQUAT -> detectSquatMovement(landmarks)
+                ExerciseType.PUSH_UP -> detectPushUpMovement(landmarks)
                 else -> ExerciseState.READY
             }
 
@@ -407,14 +408,14 @@ class ExerciseActivity : AppCompatActivity() {
             val currentDistance = avgWrist - avgShoulder
 
             // Use percentage of baseline for thresholds (adaptive to person's size)
-            val PushUpThreshold = baselineWristShoulderDistance * 0.40f  // 40% closer = squat
+            val pushUpThreshold = baselineWristShoulderDistance * 0.40f  // 40% closer = squat
             val standThreshold = baselineWristShoulderDistance * 0.95f // 95% of baseline = standing
 
             Log.d("SquatDetection", "Current: $currentDistance, Baseline: $baselineWristShoulderDistance")
-            Log.d("SquatDetection", "Squat threshold: $PushUpThreshold, Stand threshold: $PushUpThreshold")
+            Log.d("SquatDetection", "Squat threshold: $pushUpThreshold, Stand threshold: $pushUpThreshold")
 
             return when {
-                currentDistance <= PushUpThreshold -> {
+                currentDistance <= pushUpThreshold -> {
                     Log.d("PushUPDetection", "DOWN - distance: $currentDistance")
                     ExerciseState.DOWN_POSITION
                 }
@@ -428,10 +429,6 @@ class ExerciseActivity : AppCompatActivity() {
                 }
             }
         }
-        return ExerciseState.READY
-    }
-
-    private fun detectPullUpMovement(landmarks: ExerciseLandmarks): ExerciseState {
         return ExerciseState.READY
     }
 

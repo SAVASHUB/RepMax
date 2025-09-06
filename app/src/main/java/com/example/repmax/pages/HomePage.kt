@@ -24,7 +24,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.repmax.ExerciseActivity
-import com.example.repmax.ExerciseButton
+import com.example.repmax.ExerciseButtonPullUp
+import com.example.repmax.ExerciseButtonPushUp
+import com.example.repmax.ExerciseButtonSquat
 import com.example.repmax.ExerciseType
 
 @Composable
@@ -60,9 +62,21 @@ fun HomePage(modifier: Modifier = Modifier, navController: NavController, authVi
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
-        ExerciseButton(
+        ExerciseButtonSquat(
             onClick = {
                 startExerciseActivity(ExerciseType.SQUAT)
+            }
+        )
+
+        ExerciseButtonPushUp(
+            onClick = {
+                startExerciseActivity(ExerciseType.PUSH_UP)
+            }
+        )
+
+        ExerciseButtonPullUp(
+            onClick = {
+                startExerciseActivity(ExerciseType.PULL_UP)
             }
         )
 
