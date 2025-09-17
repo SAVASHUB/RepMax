@@ -62,24 +62,29 @@ fun HomePage(modifier: Modifier = Modifier, navController: NavController, authVi
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
-        ExerciseButtonSquat(
-            onClick = {
-                startExerciseActivity(ExerciseType.SQUAT)
-            }
-        )
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            ExerciseButtonSquat(
+                onClick = {
+                    startExerciseActivity(ExerciseType.SQUAT)
+                }
+            )
 
-        ExerciseButtonPushUp(
-            onClick = {
-                startExerciseActivity(ExerciseType.PUSH_UP)
-            }
-        )
+            ExerciseButtonPushUp(
+                onClick = {
+                    startExerciseActivity(ExerciseType.PUSH_UP)
+                }
+            )
 
-        ExerciseButtonPullUp(
-            onClick = {
-                startExerciseActivity(ExerciseType.PULL_UP)
-            }
-        )
-
+            ExerciseButtonPullUp(
+                onClick = {
+                    startExerciseActivity(ExerciseType.PULL_UP)
+                }
+            )
+        }
     }
 }
 

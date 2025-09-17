@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
@@ -17,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -40,20 +42,22 @@ fun ExerciseButtonPullUp(onClick: () -> Unit,
         shape = RoundedCornerShape(20.dp)
     ) {
         Row(
+            modifier = modifier.padding(32.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_pullups),
                 contentDescription = "PullUp",
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.width(90.dp).height(400.dp),
+                contentScale = ContentScale.FillHeight
             )
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "PULL_UPS",
+                    text = "PULL-UPS",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )

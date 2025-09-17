@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -40,13 +41,15 @@ fun ExerciseButtonSquat(onClick: () -> Unit,
         shape = RoundedCornerShape(20.dp)
     ) {
         Row(
+            modifier = modifier.padding(32.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_squats),
                 contentDescription = "Squat",
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(70.dp).height(50.dp),
+                contentScale = ContentScale.FillBounds
             )
 
             Column(
