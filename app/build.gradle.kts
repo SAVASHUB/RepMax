@@ -38,11 +38,12 @@ android {
     buildFeatures {
         compose = true
     }
-}
+}4
 
 dependencies {
-
-    implementation(libs.firebase.auth)
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -70,4 +71,5 @@ dependencies {
     implementation("androidx.camera:camera-view:${camerax_version}")
     implementation("androidx.camera:camera-core:${camerax_version}")
     implementation("androidx.camera:camera-lifecycle:${camerax_version}")
+    implementation("com.google.guava:guava:31.1-android")
 }

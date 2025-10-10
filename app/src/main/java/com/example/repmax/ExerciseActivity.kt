@@ -20,7 +20,8 @@ import androidx.camera.core.ImageProxy
 import android.content.Intent
 import android.view.View
 import android.widget.Button
-
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 enum class ExerciseState {
     READY,
@@ -264,7 +265,7 @@ class ExerciseActivity : AppCompatActivity() {
             val isInFrame = when (currentExercise) {
                 ExerciseType.SQUAT -> checkSquatPositioning(landmarks)
                 ExerciseType.PUSH_UP -> checkPushUpPositioning(landmarks)
-                ExerciseType.PULL_UP -> checkPullUpPositioning(landmarks)
+                ExerciseType.PULL_UP -> checkPullUpPositioning()
             }
 
             if (isInFrame) {
@@ -349,7 +350,7 @@ class ExerciseActivity : AppCompatActivity() {
 
                 Log.d("ExerciseActivity", "Baseline recorded: $baselineWristShoulderDistance pixels")
             }
-            ExerciseType.PULL_UP -> checkPullUpPositioning(landmarks)
+            ExerciseType.PULL_UP -> checkPullUpPositioning()
         }
 
     }
@@ -465,7 +466,7 @@ class ExerciseActivity : AppCompatActivity() {
                 wristY <= frameBottom
     }
 
-    private fun checkPullUpPositioning(landmarks: ExerciseLandmarks): Boolean {
+    private fun checkPullUpPositioning(): Boolean {
         return false
     }
 
@@ -483,12 +484,61 @@ class ExerciseActivity : AppCompatActivity() {
     }
 
     private fun endExercise() {
+        // Save exercise results to Firebase if there are reps to save
+        if (repCount > 0) {
+            updateFirebaseStats(repCount, currentExercise)
+        }
+
         Toast.makeText(this, "Exercise completed! Reps: $repCount", Toast.LENGTH_SHORT).show()
 
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         startActivity(intent)
         finish()
+    }
+
+    private fun updateFirebaseStats(reps: Int, exerciseType: ExerciseType) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null && reps > 0) {
+            val firestore = FirebaseFirestore.getInstance()
+            val userStatsRef = firestore.collection("users")
+                .document(currentUser.uid)
+                .collection("stats")
+                .document("totals")
+
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(userStatsRef)
+                val currentStats = if (snapshot.exists()) {
+                    snapshot.toObject(UserStats::class.java) ?: UserStats()
+                } else {
+                    UserStats()
+                }
+
+                val updatedStats = when (exerciseType) {
+                    ExerciseType.SQUAT -> currentStats.copy(
+                        totalReps = currentStats.totalReps + reps,
+                        squatReps = currentStats.squatReps + reps,
+                        lastUpdated = System.currentTimeMillis()
+                    )
+                    ExerciseType.PUSH_UP -> currentStats.copy(
+                        totalReps = currentStats.totalReps + reps,
+                        pushUpReps = currentStats.pushUpReps + reps,
+                        lastUpdated = System.currentTimeMillis()
+                    )
+                    ExerciseType.PULL_UP -> currentStats.copy(
+                        totalReps = currentStats.totalReps + reps,
+                        pullUpReps = currentStats.pullUpReps + reps,
+                        lastUpdated = System.currentTimeMillis()
+                    )
+                }
+
+                transaction.set(userStatsRef, updatedStats)
+            }.addOnSuccessListener {
+                Log.d("ExerciseActivity", "Stats updated successfully: $reps reps added")
+            }.addOnFailureListener { exception ->
+                Log.e("ExerciseActivity", "Error updating stats", exception)
+            }
+        }
     }
 
     override fun onDestroy() {

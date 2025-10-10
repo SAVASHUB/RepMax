@@ -14,6 +14,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -33,6 +36,12 @@ import com.example.repmax.ExerciseType
 fun HomePage(modifier: Modifier = Modifier, navController: NavController, authViewModel: AuthViewModel) {
 
     val context = LocalContext.current
+    val totalReps by authViewModel.totalReps.observeAsState(0)
+
+    // Load user stats when HomePage is displayed
+    LaunchedEffect(Unit) {
+        authViewModel.loadUserStats()
+    }
 
     fun startExerciseActivity(exerciseType: ExerciseType) {
         val intent = Intent(context, ExerciseActivity::class.java).apply {
@@ -51,8 +60,40 @@ fun HomePage(modifier: Modifier = Modifier, navController: NavController, authVi
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 64.dp)
+            modifier = Modifier.padding(bottom = 16.dp)
         )
+
+        // Total reps display card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp)
+                .padding(bottom = 32.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Total Reps:",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = totalReps.toString(),
+                    fontSize = 42.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
 
         Text(
             text = "Choose Your Exercise",
@@ -87,4 +128,3 @@ fun HomePage(modifier: Modifier = Modifier, navController: NavController, authVi
         }
     }
 }
-
