@@ -1,31 +1,33 @@
 package com.example.repmax.pages
 
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import com.example.repmax.AuthViewModel
-import android.content.Intent
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import com.example.repmax.AuthState
+import com.example.repmax.AuthViewModel
 import com.example.repmax.ExerciseActivity
 import com.example.repmax.ExerciseButtonPullUp
 import com.example.repmax.ExerciseButtonPushUp
@@ -37,10 +39,17 @@ fun HomePage(modifier: Modifier = Modifier, navController: NavController, authVi
 
     val context = LocalContext.current
     val totalReps by authViewModel.totalReps.observeAsState(0)
+    val authState by authViewModel.authState.observeAsState()
 
-    // Load user stats when HomePage is displayed
-    LaunchedEffect(Unit) {
-        authViewModel.loadUserStats()
+    // Navigate to Login if user becomes unauthenticated
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Unauthenticated) {
+            navController.navigate("Login") {
+                popUpTo("Home") { inclusive = true }
+            }
+        } else {
+            authViewModel.loadUserStats()
+        }
     }
 
     fun startExerciseActivity(exerciseType: ExerciseType) {
@@ -50,25 +59,44 @@ fun HomePage(modifier: Modifier = Modifier, navController: NavController, authVi
         context.startActivity(intent)
     }
 
-    Column (
-        modifier = modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "RepMax",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        // Header with Title and Sign Out button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "RepMax",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            TextButton(onClick = { authViewModel.signOut() }) {
+                Text(
+                    text = "Sign Out",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Total reps display card
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 32.dp)
-                .padding(bottom = 32.dp),
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 24.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer
             ),
@@ -96,15 +124,15 @@ fun HomePage(modifier: Modifier = Modifier, navController: NavController, authVi
         }
 
         Text(
-            text = "Choose Your Exercise",
+            text = "Choose Your Exercise:",
             fontSize = 20.sp,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 32.dp)
+            modifier = Modifier.padding(bottom = 24.dp)
         )
 
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(horizontal = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

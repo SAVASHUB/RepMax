@@ -32,7 +32,7 @@ import kotlinx.coroutines.newSingleThreadContext
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.repmax.pages.SingUpPage
+import com.example.repmax.pages.SignUpPage
 import com.example.repmax.AppNavigation
 import com.example.repmax.AuthState
 
@@ -52,7 +52,9 @@ fun LoginPage(modifier: Modifier = Modifier, navController: NavController, authV
 
     LaunchedEffect(authState.value) {
         when(authState.value){
-            is AuthState.Authenticated -> navController.navigate("Home")
+            is AuthState.Authenticated -> navController.navigate("Home") {
+                popUpTo("Login") { inclusive = true }
+            }
             is AuthState.Error -> Toast.makeText( context, (authState.value as AuthState.Error).message,
                 Toast.LENGTH_SHORT).show()
             else -> Unit
@@ -101,9 +103,9 @@ fun LoginPage(modifier: Modifier = Modifier, navController: NavController, authV
         Spacer(modifier = Modifier.height(20.dp))
 
         TextButton(onClick = {
-            navController.navigate("SingUp")
+            navController.navigate("SignUp")
         }) {
-            Text( text = "Don't have an account? Sing up!")
+            Text( text = "Don't have an account? Sign up!")
         }
 
     }
