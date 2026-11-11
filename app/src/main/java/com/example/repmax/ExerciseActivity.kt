@@ -54,10 +54,10 @@ class ExerciseActivity : AppCompatActivity() {
     private lateinit var instructionText: TextView
     private lateinit var positioningFrame: android.view.View
 
-    // Baseline measurements for adaptive squat detection
+    // Baseline measurements for adaptive exercise detection
     private var baselineHipKneeDistance: Float = 0f
-
     private var baselineWristShoulderDistance: Float = 0f
+    private var baselinePullUpDistance: Float = 0f
     private var baselineRecorded = false
 
     private var wasDown = false
@@ -229,7 +229,7 @@ class ExerciseActivity : AppCompatActivity() {
             val newState = when (currentExercise) {
                 ExerciseType.SQUAT -> detectSquatMovement(landmarks)
                 ExerciseType.PUSH_UP -> detectPushUpMovement(landmarks)
-                else -> ExerciseState.READY
+                ExerciseType.PULL_UP -> detectPullUpMovement(landmarks)
             }
 
             when (newState) {
@@ -263,7 +263,7 @@ class ExerciseActivity : AppCompatActivity() {
             val isInFrame = when (currentExercise) {
                 ExerciseType.SQUAT -> checkSquatPositioning(landmarks)
                 ExerciseType.PUSH_UP -> checkPushUpPositioning(landmarks)
-                ExerciseType.PULL_UP -> checkPullUpPositioning()
+                ExerciseType.PULL_UP -> checkPullUpPositioning(landmarks)
             }
 
             if (isInFrame) {
@@ -348,7 +348,14 @@ class ExerciseActivity : AppCompatActivity() {
 
                 Log.d("ExerciseActivity", "Baseline recorded: $baselineWristShoulderDistance pixels")
             }
-            ExerciseType.PULL_UP -> checkPullUpPositioning()
+            ExerciseType.PULL_UP -> if (leftShoulder != null && rightShoulder != null && leftWrist != null && rightWrist != null) {
+                val avgShoulderY = (leftShoulder.position.y + rightShoulder.position.y) / 2
+                val avgWristY = (leftWrist.position.y + rightWrist.position.y) / 2
+                baselinePullUpDistance = avgShoulderY - avgWristY
+                baselineRecorded = true
+
+                Log.d("ExerciseActivity", "Pull-up baseline recorded: $baselinePullUpDistance pixels")
+            }
         }
 
     }
@@ -431,6 +438,45 @@ class ExerciseActivity : AppCompatActivity() {
         return ExerciseState.READY
     }
 
+    private fun detectPullUpMovement(landmarks: ExerciseLandmarks): ExerciseState {
+        val leftShoulder = landmarks.leftShoulder
+        val rightShoulder = landmarks.rightShoulder
+        val leftWrist = landmarks.leftWrist
+        val rightWrist = landmarks.rightWrist
+
+        if (leftShoulder != null && rightShoulder != null &&
+            leftWrist != null && rightWrist != null && baselineRecorded) {
+
+            val avgShoulderY = (leftShoulder.position.y + rightShoulder.position.y) / 2
+            val avgWristY = (leftWrist.position.y + rightWrist.position.y) / 2
+            val currentDistance = avgShoulderY - avgWristY
+
+            // In pull-ups:
+            // Hanging start position: arms extended overhead -> avgShoulderY > avgWristY (large positive distance)
+            // Top of pull-up (head over bar): shoulders move up towards wrists -> distance shrinks
+            val topThreshold = baselinePullUpDistance * 0.25f  // Shoulder 25% or closer to wrist = UP (head over bar)
+            val hangThreshold = baselinePullUpDistance * 0.85f // 85% or more of baseline = DOWN (hanging)
+
+            Log.d("PullUpDetection", "Current: $currentDistance, Baseline: $baselinePullUpDistance")
+
+            return when {
+                currentDistance <= topThreshold -> {
+                    Log.d("PullUpDetection", "UP (head over bar) - distance: $currentDistance")
+                    ExerciseState.UP_POSITION
+                }
+                currentDistance >= hangThreshold -> {
+                    Log.d("PullUpDetection", "DOWN (hanging) - distance: $currentDistance")
+                    ExerciseState.DOWN_POSITION
+                }
+                else -> {
+                    Log.d("PullUpDetection", "TRANSITION - distance: $currentDistance")
+                    ExerciseState.TRANSITION
+                }
+            }
+        }
+        return ExerciseState.READY
+    }
+
     private fun checkPushUpPositioning(landmarks: ExerciseLandmarks): Boolean {
         val leftShoulder = landmarks.leftShoulder
         val rightShoulder = landmarks.rightShoulder
@@ -464,8 +510,48 @@ class ExerciseActivity : AppCompatActivity() {
                 wristY <= frameBottom
     }
 
-    private fun checkPullUpPositioning(): Boolean {
-        return false
+    private fun checkPullUpPositioning(landmarks: ExerciseLandmarks): Boolean {
+        val leftShoulder = landmarks.leftShoulder
+        val rightShoulder = landmarks.rightShoulder
+        val leftElbow = landmarks.leftElbow
+        val rightElbow = landmarks.rightElbow
+        val leftWrist = landmarks.leftWrist
+        val rightWrist = landmarks.rightWrist
+
+        // Key upper body points must be visible
+        if (leftShoulder == null || rightShoulder == null ||
+            leftElbow == null || rightElbow == null ||
+            leftWrist == null || rightWrist == null) {
+            return false
+        }
+
+        // 1. Arms must be raised over head (wrists above shoulders in Y coordinate)
+        if (leftWrist.position.y >= leftShoulder.position.y ||
+            rightWrist.position.y >= rightShoulder.position.y) {
+            return false
+        }
+
+        // 2. Wrists must be aligned horizontally (holding the bar)
+        val wristYDiff = kotlin.math.abs(leftWrist.position.y - rightWrist.position.y)
+        val screenHeight = previewView.height.toFloat()
+        val maxYDiff = screenHeight * 0.12f // Wrists aligned within 12% of screen height
+        if (wristYDiff > maxYDiff) {
+            return false
+        }
+
+        // 3. Frame boundary check
+        val screenWidth = previewView.width.toFloat()
+        val frameLeft = screenWidth * 0.1f
+        val frameRight = screenWidth * 0.9f
+        val frameBottom = screenHeight * 0.95f
+
+        val avgWristX = (leftWrist.position.x + rightWrist.position.x) / 2
+        val avgShoulderX = (leftShoulder.position.x + rightShoulder.position.x) / 2
+        val wristY = maxOf(leftWrist.position.y, rightWrist.position.y)
+
+        return avgWristX in frameLeft..frameRight &&
+                avgShoulderX in frameLeft..frameRight &&
+                wristY <= frameBottom
     }
 
     // Keep your existing UI update methods
